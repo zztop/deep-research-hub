@@ -1,0 +1,23 @@
+[project]
+name = "deep-research-hub"
+version = "0.1.0"
+description = "ADK-based multi-agent deep research service exposed via a FastAPI /research endpoint"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.141.1",
+    "google-adk>=2.10.0",
+    "pydantic>=2.13.5",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.9",
+]
+
+[tool.ruff.lint]
+# EXE002 (executable file without shebang) is a false positive on this
+# filesystem mount: it reports every file as executable regardless of
+# chmod, so the rule would flag the entire project.
+ignore = ["EXE002"]
