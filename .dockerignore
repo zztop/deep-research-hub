@@ -1,0 +1,10 @@
+.venv
+.git
+.adk
+logs
+tests
+terraform
+__pycache__
+*.pyc
+.ruff_cache
+_debug_run.py

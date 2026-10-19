@@ -6,15 +6,8 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from deep_research_hub.agent import root_agent
-from deep_research_hub.sub_agents.research_verifier import ResearchScore
 
-from .schemas import RESEARCH_REPORT_EXAMPLE, ResearchRequest
-
-RESEARCH_SCORE_EXAMPLE = {
-    "summary": RESEARCH_REPORT_EXAMPLE["summary"],
-    "original_research": RESEARCH_REPORT_EXAMPLE,
-    "score": 4,
-}
+from .schemas import RESEARCH_REPORT_EXAMPLE, ResearchReport, ResearchRequest
 
 logger = logging.getLogger("deep_research_hub.api")
 
@@ -29,12 +22,12 @@ runner = Runner(app_name=APP_NAME, agent=root_agent, session_service=session_ser
 
 @app.post(
     "/research",
-    response_model=ResearchScore,
+    response_model=ResearchReport,
     responses={
-        200: {"content": {"application/json": {"example": RESEARCH_SCORE_EXAMPLE}}}
+        200: {"content": {"application/json": {"example": RESEARCH_REPORT_EXAMPLE}}}
     },
 )
-async def research(request: ResearchRequest) -> ResearchScore:
+async def research(request: ResearchRequest) -> ResearchReport:
     session = await session_service.create_session(
         app_name=APP_NAME, user_id=CALLER_USER_ID
     )
@@ -82,8 +75,8 @@ async def research(request: ResearchRequest) -> ResearchScore:
         raise HTTPException(status_code=502, detail=detail)
 
     try:
-        result = ResearchScore.model_validate_json(final_text)
-        logger.info("research done session=%s score=%s", session.id, result.score)
+        result = ResearchReport.model_validate_json(final_text)
+        logger.info("research done session=%s sources=%d", session.id, len(result.sources))
         return result
     except ValueError as exc:
         logger.error(
