@@ -13,6 +13,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.1",
     "ruff>=0.16.9",
 ]
 
@@ -21,3 +22,10 @@ dev = [
 # filesystem mount: it reports every file as executable regardless of
 # chmod, so the rule would flag the entire project.
 ignore = ["EXE002"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = ["live: calls the real Gemini API (opt-in with -m live)"]
+addopts = "-m 'not live'"
+
+
