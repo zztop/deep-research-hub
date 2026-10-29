@@ -1,11 +1,12 @@
-"""Trajectory checks for the coordinator -> researcher* -> aggregator path."""
+"""Trajectory checks: coordinator -> (researcher* -> aggregator -> verifier){1,2}."""
 
 from dataclasses import dataclass, field
 
-from deep_research_hub.agent import MAX_RESEARCHERS, MIN_RESEARCHERS
+from deep_research_hub.agent import MAX_ATTEMPTS, MAX_RESEARCHERS, MIN_RESEARCHERS
 
 RESEARCHER = "researcher"
 AGGREGATOR = "research_aggregator"
+VERIFIER = "research_verifier_agent"
 
 
 @dataclass
@@ -30,26 +31,44 @@ def check_trajectory(
     problems: list[str] = []
     calls = t.coordinator_calls
 
-    unexpected = sorted({c for c in calls if c not in (RESEARCHER, AGGREGATOR)})
+    unexpected = sorted(
+        {c for c in calls if c not in (RESEARCHER, AGGREGATOR, VERIFIER)}
+    )
     if unexpected:
         problems.append(f"unexpected tool calls: {unexpected}")
 
-    n_research = calls.count(RESEARCHER)
-    if not min_researchers <= n_research <= max_researchers:
+    # Split into attempts, each ending at a verifier call.
+    attempts: list[list[str]] = [[]]
+    for c in calls:
+        attempts[-1].append(c)
+        if c == VERIFIER:
+            attempts.append([])
+    trailing = attempts.pop()
+    if trailing:
+        problems.append(f"calls after the last verifier call: {trailing}")
+
+    if not 1 <= len(attempts) <= MAX_ATTEMPTS:
         problems.append(
-            f"researcher called {n_research}x, expected "
-            f"{min_researchers}-{max_researchers}"
+            f"{len(attempts)} verified attempt(s), expected 1-{MAX_ATTEMPTS}"
         )
+    for i, attempt in enumerate(attempts, 1):
+        n = attempt.count(RESEARCHER)
+        # Only the first attempt is bounded by the topic's complexity; a rerun
+        # may use any valid number of sub-questions.
+        lo, hi = (min_researchers, max_researchers) if i == 1 else (
+            MIN_RESEARCHERS,
+            MAX_RESEARCHERS,
+        )
+        if not lo <= n <= hi:
+            problems.append(f"attempt {i}: researcher called {n}x, expected {lo}-{hi}")
+        expected_tail = [AGGREGATOR, VERIFIER]
+        if attempt[-2:] != expected_tail or attempt.count(AGGREGATOR) != 1:
+            problems.append(
+                f"attempt {i}: expected researchers, then one aggregator, then "
+                f"the verifier; got {attempt}"
+            )
 
-    if AGGREGATOR not in calls:
-        problems.append("research_aggregator was never called")
-    elif RESEARCHER in calls:
-        last_researcher = len(calls) - 1 - calls[::-1].index(RESEARCHER)
-        if calls.index(AGGREGATOR) < last_researcher:
-            problems.append("aggregator was called before all researchers finished")
-
-    if calls and calls[-1] != AGGREGATOR:
-        problems.append(f"last tool call was {calls[-1]!r}, expected {AGGREGATOR!r}")
+    n_research = calls.count(RESEARCHER)
 
     if t.rejections:
         problems.append(

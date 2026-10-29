@@ -1,0 +1,30 @@
+
+LOCATION-docker.pkg.dev/PROJECT_ID/REPO_NAME/PATH:TAG
+
+
+
+us-east4-docker.pkg.dev/agenticsearch-1741694687968/deep-research-hub/
+
+us-east4-docker.pkg.dev/agenticsearch-1741694687968/deep-research-hub/deep-research-hub:v1
+
+
+PROJECT_NUMBER=$(gcloud projects describe agenticsearch-1741694687968 --format="value(projectNumber)")
+
+gcloud artifacts repositories add-iam-policy-binding deep-research-hub \
+  --location=us-east4 \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/artifactregistry.writer"
+
+
+  gcloud builds submit \
+  --tag us-east4-docker.pkg.dev/agenticsearch-1741694687968/deep-research-hub/deep-research-hub:v1 \
+  --region us-east4
+
+
+  gcloud run deploy deep-research-hub \
+  --image us-east4-docker.pkg.dev/agenticsearch-1741694687968/deep-research-hub/deep-research-hub:v1 \
+  --region us-east4 \
+  --service-account research-agent-sa@agenticsearch-1741694687968.iam.gserviceaccount.com 
+  --no-allow-unauthenticated
+
+  curl -X POST "https://deep-research-hub-174003516818.us-east4.run.app/research" -H "Authorization: bearer $(gcloud auth print-identity-token)" -H "Content-Type: application/json" -d '{"topic":"is china great"}'

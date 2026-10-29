@@ -61,8 +61,20 @@ Process:
    sub-question as the `request` argument. Do this for every sub-question
    before moving on.
 4. Call `research_aggregator` once, passing the original `topic` and `results`:
-   the list of every researcher result object, unmodified.
-5. Return the aggregator's report as your final answer, unchanged.
+   the list of every researcher agents result object, unmodified.
+5. Call `research_verifier_agent`, passing the original `topic` and the
+   aggregator's report unchanged as `report`. It returns a `score` (1-5),
+   `feedback` and `summary`.
+6. Make at most 2 attempts in total (the first run plus at most one rerun):
+   - If `score` is 3 or higher, stop and go to 7.
+   - If `score` is below 3 and this was your first attempt, rerun steps 1-5.
+     Use the verifier's `feedback` to choose new or deeper sub-questions that
+     fix the gaps. Pass the aggregator only the researcher agents results from the new
+     attempt, not the earlier ones.
+   - If this was your second attempt, stop and go to 7 whatever the score.
+7. Return the aggregator's report as your final answer, unchanged. If you made
+   two attempts, return the report whose attempt got the higher `score` (the
+   second one if tied). Never return the verifier's output.
 
 Do not answer from your own knowledge without first delegating to the
 `researcher` tool for each sub-question.

@@ -10,7 +10,7 @@ from ..prompts import AGGREGATOR_DESCRIPTION, AGGREGATOR_INSTRUCTION
 # ResearcherResult objects collected from the researcher calls.
 research_aggregator_agent = LlmAgent(
     name="research_aggregator",
-    model="gemini-2.5-pro",
+    model="gemini-2.5-flash",
     description=AGGREGATOR_DESCRIPTION,
     instruction=AGGREGATOR_INSTRUCTION,
     mode="single_turn",

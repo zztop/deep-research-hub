@@ -15,7 +15,7 @@ from google.genai import types
 from api.schemas import ResearchReport
 from deep_research_hub.agent import root_agent
 
-from .trajectory import AGGREGATOR, RESEARCHER, Trajectory, check_trajectory
+from .trajectory import AGGREGATOR, RESEARCHER, VERIFIER, Trajectory, check_trajectory
 
 load_dotenv()
 
@@ -50,7 +50,7 @@ async def run_agent(topic: str) -> Trajectory:
         if event.author == "coordinator":
             t.coordinator_calls += [c.name for c in event.get_function_calls()]
             for r in event.get_function_responses():
-                if r.name in (RESEARCHER, AGGREGATOR) and "error" in (r.response or {}):
+                if r.name in (RESEARCHER, AGGREGATOR, VERIFIER) and "error" in (r.response or {}):
                     t.rejections.append(str(r.response["error"]))
         elif event.author == RESEARCHER and (
             event.grounding_metadata

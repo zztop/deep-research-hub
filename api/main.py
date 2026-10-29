@@ -5,7 +5,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
-from deep_research_hub.agent import root_agent
+from deep_research_hub.agent import app as adk_app
 
 from .schemas import RESEARCH_REPORT_EXAMPLE, ResearchReport, ResearchRequest
 
@@ -17,7 +17,7 @@ CALLER_USER_ID = "api-caller"
 app = FastAPI(title="Deep Research Hub")
 
 session_service = InMemorySessionService()
-runner = Runner(app_name=APP_NAME, agent=root_agent, session_service=session_service)
+runner = Runner(app=adk_app, session_service=session_service)
 
 
 @app.post(
